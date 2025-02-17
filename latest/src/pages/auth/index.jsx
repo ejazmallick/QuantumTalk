@@ -1,129 +1,142 @@
-//import background from '../../assets/login2.png';
-// import victory from "../../assets/victory.svg";
-import { MessageCircle, Users, Zap, ArrowRight } from "lucide-react";
-import {Link} from 'react-router-dom';
-import { TabsList } from "../../components/ui/tabs";
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from "framer-motion";
+import { MessageCircle, Users, Zap } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useState } from 'react';
+import apiClient from '../../lib/api-client';
+import { SIGNUP_ROUTE } from '../../utils/constants';
+import { useAppStore } from '../../store';
 
-const Auth = () => {
+export default function Auth() {
+  const navigate = useNavigate();
+  const {setUserInfo} = useAppStore;
+  
+  const validateLogin = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+    return true;
+  }
+
+  const validateSignup = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Password and confirm password do not match");
+      return false;
+    }
+    return true;
+  };
+
+  const handleLogin = async () => {
+    if(validateLogin()){
+      const response = await apiClient.post(LOGIN_ROUTE, { email, password },{ withCredentials: true});
+      if(response.data.user.id){
+        setUserInfo(response.data.user);
+      }
+      if(response.data.user.profileSetup) navigate("/chat");
+      else navigate("/profile");
+      console.log({ response });
+    } // Handle login logic here
+  };
+
+  const handleSignup = async () => {
+    if (validateSignup()) {
+      const response = await apiClient.post(SIGNUP_ROUTE, { email, password },{ withCredentials: true});
+
+      if(response.status === 201){
+        setUserInfo(response.data.user);
+        navigate('/profile');
+      }
+      console.log({ response });
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-purple-500 to-indigo-600 flex flex-col">
-      {/* Navigation */}
-      <nav className="w-full p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <MessageCircle className="w-8 h-8 text-white" />
-            <span className="text-2xl font-bold text-white">ChatWave</span>
-          </div>
-          <div className="space-x-4">
-         
-       
-
-            <Link to="/login">
-              <button className="bg-white text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg">Login</button>
-            </Link>
-            <Link to="/signup">
-              <button className="bg-white text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg">Sign Up</button>
-            </Link>
-       
-          </div>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-black to-gray-950 relative overflow-hidden">
+      {/* Floating chat bubbles */}
+      <div className="absolute inset-0 flex flex-col space-y-6 items-center justify-center opacity-10">
+        <div className="bg-gray-800 text-gray-400 px-4 py-2 rounded-full text-sm shadow-lg">
+          Join the conversation! 🎉
         </div>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="flex-grow flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col lg:flex-row items-center">
-          <div className="lg:w-1/2 lg:pr-12 mb-10 lg:mb-0">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Welcome to ChatWave
-            </h1>
-            <p className="text-xl text-indigo-100 mb-8">
-              Connect, collaborate, and chat in real-time with friends and
-              colleagues. Experience the next level of communication.
-            </p>
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              {/* <Button size="lg" className="bg-white text-indigo-600 hover:bg-indigo-100">
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button> */}
-              {/* <Button
-              size="lg"
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-indigo-600"
-            >
-              Learn More
-            </Button> */}
-            </div>
-          </div>
-          <div className="lg:w-1/2">
-            {/* <Image
-            src="/placeholder.svg?height=400&width=400"
-            alt="ChatWave App"
-            width={400}
-            height={400}
-            className="rounded-lg shadow-2xl"
-          /> */}
-          </div>
+        <div className="bg-gray-700 text-gray-300 px-4 py-2 rounded-full text-sm shadow-lg">
+          Connect with friends in real-time.
         </div>
-      </main>
+      </div>
 
-      {/* Features Section */}
-      <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Choose ChatWave?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<MessageCircle className="w-12 h-12 text-indigo-600" />}
-              title="Real-time Messaging"
-              description="Instantly connect with your contacts and enjoy seamless conversations."
-            />
-            <FeatureCard
-              icon={<Users className="w-12 h-12 text-indigo-600" />}
-              title="Group Chats"
-              description="Create and manage group conversations for team collaboration or friend circles."
-            />
-            <FeatureCard
-              icon={<Zap className="w-12 h-12 text-indigo-600" />}
-              title="Fast & Secure"
-              description="Experience lightning-fast messaging with end-to-end encryption for your privacy."
-            />
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md bg-gray-900 bg-opacity-75 backdrop-blur-md border border-gray-800 shadow-xl rounded-2xl p-6 space-y-6 relative z-10"
+      >
+        {/* Header */}
+        <div className="flex items-center space-x-3">
+          <Icons.logo className="h-12 w-12 text-cyan-400 animate-pulse" />
+          <h1 className="text-2xl font-bold text-white">Welcome to ChatWave</h1>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="bg-indigo-800 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <MessageCircle className="w-6 h-6" />
-            <span className="text-xl font-semibold">ChatWave</span>
-          </div>
-          <div className="flex space-x-6">
-            <a href="#" className="hover:text-indigo-200">
-              About
-            </a>
-            <a href="#" className="hover:text-indigo-200">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-indigo-200">
-              Terms
-            </a>
-            <a href="#" className="hover:text-indigo-200">
-              Contact
-            </a>
-          </div>
+        <p className="text-gray-300 text-center">
+          The next-gen chat platform for seamless communication.
+        </p>
+
+        {/* Feature Highlights */}
+        <div className="space-y-4">
+          <FeatureCard
+            icon={<MessageCircle className="w-8 h-8 text-cyan-400" />}
+            title="Instant Messaging"
+            description="Enjoy real-time, secure conversations."
+          />
+          <FeatureCard
+            icon={<Users className="w-8 h-8 text-cyan-400" />}
+            title="Group Chats"
+            description="Create and manage group conversations."
+          />
+          <FeatureCard
+            icon={<Zap className="w-8 h-8 text-cyan-400" />}
+            title="Lightning Fast"
+            description="Experience smooth and responsive chats."
+          />
         </div>
-      </footer>
+
+        {/* Buttons */}
+        <div className="flex flex-col space-y-4">
+          <Link to="/login">
+            <button className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-bold py-3 px-4 rounded-full shadow-lg transition-all">
+              Login
+            </button>
+          </Link>
+          <Link to="/signup">
+            <button className="w-full bg-gray-800 text-white border border-gray-600 hover:bg-gray-700 hover:border-cyan-400 transition-all rounded-full py-3 px-4">
+              Sign Up
+            </button>
+          </Link>
+        </div>
+      </motion.div>
+      <ToastContainer />
     </div>
   );
-};
+}
+
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="flex flex-col items-center text-center">
-    <div className="mb-4">{icon}</div>
-    <h3 className="text-xl font-semibold mb-2">{title}</h3>
-    <p className="text-gray-600">{description}</p>
+  <div className="flex items-center space-x-4 bg-gray-800 p-4 rounded-lg shadow-md">
+    <div>{icon}</div>
+    <div>
+      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <p className="text-gray-400 text-sm">{description}</p>
+    </div>
   </div>
 );
-
-export default Auth;
