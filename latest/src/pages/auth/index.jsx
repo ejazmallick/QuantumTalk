@@ -10,60 +10,60 @@ import { SIGNUP_ROUTE } from '../../utils/constants';
 import { useAppStore } from '../../store';
 
 export default function Auth() {
-  const navigate = useNavigate();
-  const {setUserInfo} = useAppStore;
+//   const navigate = useNavigate();
+//   const {setUserInfo} = useAppStore;
   
-  const validateLogin = () => {
-    if (!email.length) {
-      toast.error("Email is required");
-      return false;
-    }
-    if (!password.length) {
-      toast.error("Password is required");
-      return false;
-    }
-    return true;
-  }
+//   const validateLogin = () => {
+//     if (!email.length) {
+//       toast.error("Email is required");
+//       return false;
+//     }
+//     if (!password.length) {
+//       toast.error("Password is required");
+//       return false;
+//     }
+//     return true;
+//   }
 
-  const validateSignup = () => {
-    if (!email.length) {
-      toast.error("Email is required");
-      return false;
-    }
-    if (!password.length) {
-      toast.error("Password is required");
-      return false;
-    }
-    if (password !== confirmPassword) {
-      toast.error("Password and confirm password do not match");
-      return false;
-    }
-    return true;
-  };
+  // const validateSignup = () => {
+  //   if (!email.length) {
+  //     toast.error("Email is required");
+  //     return false;
+  //   }
+  //   if (!password.length) {
+  //     toast.error("Password is required");
+  //     return false;
+  //   }
+  //   if (password !== confirmPassword) {
+  //     toast.error("Password and confirm password do not match");
+  //     return false;
+  //   }
+  //   return true;
+  // };
 
-  const handleLogin = async () => {
-    if(validateLogin()){
-      const response = await apiClient.post(LOGIN_ROUTE, { email, password },{ withCredentials: true});
-      if(response.data.user.id){
-        setUserInfo(response.data.user);
-      }
-      if(response.data.user.profileSetup) navigate("/chat");
-      else navigate("/profile");
-      console.log({ response });
-    } // Handle login logic here
-  };
+  // const handleLogin = async () => {
+  //   if(validateLogin()){
+  //     const response = await apiClient.post(LOGIN_ROUTE, { email, password },{ withCredentials: true});
+  //     if(response.data.user.id){
+  //       setUserInfo(response.data.user);
+  //     }
+  //     if(response.data.user.profileSetup) navigate("/chat");
+  //     else navigate("/profile");
+  //     console.log({ response });
+  //   } // Handle login logic here
+  // };
 
-  const handleSignup = async () => {
-    if (validateSignup()) {
-      const response = await apiClient.post(SIGNUP_ROUTE, { email, password },{ withCredentials: true});
+  // const handleSignup = async () => {
+  //   if (validateSignup()) {
+  //     const response = await apiClient.post(SIGNUP_ROUTE, { email, password },{ withCredentials: true});
 
-      if(response.status === 201){
-        setUserInfo(response.data.user);
-        navigate('/profile');
-      }
-      console.log({ response });
-    }
-  };
+  //     if(response.status === 201){
+  //       setUserInfo(response.data.user);
+  //       navigate('/profile');
+  //     }
+  //     console.log({ response });
+  //   }
+  // };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-black to-gray-950 relative overflow-hidden">

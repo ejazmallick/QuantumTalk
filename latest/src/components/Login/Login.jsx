@@ -3,7 +3,7 @@ import Button from "../../components/ui/button";
 import Input from "../../components/ui/input";
 import Label from "../../components/ui/label";
 import { motion } from "framer-motion";
-import { Icons } from "@/components/ui/icons";
+import { Icons } from "../../components/ui/icons";
 import { useState } from "react";
 import axios from "axios";
 
@@ -26,6 +26,7 @@ export default function LoginPage() {
         }
       );
       if (response.status === 200) {
+        localStorage.setItem('authToken', response.data.token); 
         navigate("/profile");
       }
       console.log(response.data);
