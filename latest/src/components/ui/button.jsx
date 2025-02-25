@@ -10,11 +10,15 @@ const buttonVariants = cva(
       variant: {
         default: "bg-blue-500 text-white hover:bg-blue-600",
         outline: "border border-gray-300 text-gray-700 hover:bg-gray-100",
+        destructive: "bg-red-500 text-white hover:bg-red-600", // Added variant
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 px-3 py-1",
-        lg: "h-12 px-6 py-3",
+        sm: "h-8 px-3 py-1 text-xs", // Improved small size
+        lg: "h-12 px-6 py-3 text-lg",
+      },
+      fullWidth: {
+        true: "w-full", // Added option for full-width buttons
       },
     },
     defaultVariants: {
@@ -24,16 +28,20 @@ const buttonVariants = cva(
   }
 );
 
-const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      className={cn(buttonVariants({ variant, size }), className)}
-      ref={ref}
-      {...props}
-    />
-  );
-});
+const Button = React.forwardRef(
+  ({ className, variant, size, fullWidth, asChild = false, disabled, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, fullWidth }), className)}
+        ref={ref}
+        disabled={disabled}
+        aria-disabled={disabled} // Accessibility improvement
+        {...props}
+      />
+    );
+  }
+);
 
 Button.displayName = "Button";
 

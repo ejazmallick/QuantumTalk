@@ -15,4 +15,13 @@ export const getUserInfo = async () => {
   return response.data;
 };
 
+export const updateProfile = async (profileData) => {
+  const response = await apiClient.put('/api/auth/update-profile', profileData, {
+    headers: {
+      Authorization: `Bearer ${document.cookie.replace('jwt=', '')}`,
+    },
+  });
+  return response.data;
+};
+
 export default apiClient;

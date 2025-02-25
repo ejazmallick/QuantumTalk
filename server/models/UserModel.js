@@ -19,10 +19,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required:false,
     },
-    color: {
-        type: String,
-        required: false,
-    },
+   
     profileSetup: {
         type: Boolean,
         default: false,
