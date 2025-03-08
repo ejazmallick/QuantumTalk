@@ -6,29 +6,33 @@ import {
   updateProfile,
   addProfileImage,
   removeProfileImage,
+  logout,
 } from "../controllers/AuthController.js";
 import { verifyToken } from "../middlewares/AuthMiddleware.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Ensure the uploads directory exists
 const uploadDir = "uploads/profiles/";
+
+// ✅ Ensure Upload Folder Exists Before Multer Runs
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Multer setup for image uploads
 const storage = multer.diskStorage({
-  destination: uploadDir,
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
     cb(null, uniqueSuffix);
   },
 });
+
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // ✅ Set max file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.mimetype)) {
@@ -38,15 +42,26 @@ const upload = multer({
   },
 });
 
+// ✅ Multer Error Handling Middleware
+const multerErrorHandler = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: `Multer error: ${err.message}` });
+  } else if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+};
+
 const authRoutes = Router();
 
 authRoutes.post("/signup", signup);
 authRoutes.post("/login", login);
 authRoutes.get("/user-info", verifyToken, getUserInfo);
-
-// ✅ Profile routes with authentication
 authRoutes.put("/update-profile", verifyToken, updateProfile);
-authRoutes.post("/add-profile-image", verifyToken, upload.single("profile-image"), addProfileImage);
+
+// ✅ Fixed field name to match frontend
+authRoutes.post("/add-profile-image", verifyToken, upload.single("profileImage"),multerErrorHandler, addProfileImage );
 authRoutes.delete("/remove-profile-image", verifyToken, removeProfileImage);
+authRoutes.post('/logout', logout )
 
 export default authRoutes;

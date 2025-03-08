@@ -2,6 +2,11 @@ import { HOST } from "../utils/constants.js";
 import axios from "axios";
 
 const apiClient = axios.create({
+    headers: {
+        Authorization: `Bearer ${localStorage.getItem('authToken')}`, // Use the correct key for the stored token
+
+    },
+
   baseURL: HOST,
   withCredentials: true,
 });

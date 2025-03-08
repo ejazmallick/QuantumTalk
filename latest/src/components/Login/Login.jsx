@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Button from "../../components/ui/button";
 import Input from "../../components/ui/input";
 import Label from "../../components/ui/label";
 import { motion } from "framer-motion";
 import { Icons } from "../../components/ui/icons";
-import { useState } from "react";
-import axios from "axios";
-
+import apiClient from "../../lib/api-client"; // ✅ Centralized API client
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -14,28 +13,41 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      console.log("🔄 User already logged in, redirecting...");
+      navigate("/profile");
+    }
+  }, []);
+
   async function onSubmit(event) {
     event.preventDefault();
     setIsLoading(true);
+
     try {
-      const response = await axios.post(
-        "http://localhost:8747/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+      const response = await apiClient.post("/api/auth/login", { email, password });
+
       if (response.status === 200) {
-        localStorage.setItem('authToken', response.data.token); 
-        navigate("/profile");
+        const { token, user } = response.data;
+
+        // ✅ Store token in localStorage
+        localStorage.setItem("authToken", token);
+        console.log("✅ Token stored:", token);
+
+        // ✅ Delay before navigating to profile
+        setTimeout(() => {
+          console.log("🔍 Navigating to /profile...");
+          navigate("/profile");
+        }, 500);
       }
-      console.log(response.data);
     } catch (error) {
-      console.error(error);
+      console.error("❌ Login error:", error.response?.data || error.message);
     } finally {
       setTimeout(() => setIsLoading(false), 3000);
     }
   }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 relative overflow-hidden">
       {/* Floating chat bubbles */}
@@ -54,11 +66,11 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm bg-gray-900 bg-opacity-75 backdrop-blur-md border border-gray-800 shadow-xl rounded-2xl p-6 space-y-6 relative z-10"
       >
-        {/* /* Chat-style logo header */ }
         <div className="flex items-center space-x-3">
           <Icons.logo className="h-12 w-12 text-cyan-400 animate-pulse" />
           <h1 className="text-2xl font-bold text-white">Chat Login</h1>
         </div>
+
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="relative">
             <Label htmlFor="email" className="text-gray-300 text-sm">
@@ -68,6 +80,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               required
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-gray-800 text-white border-none placeholder-gray-500 rounded-full py-3 px-4 focus:ring-cyan-400 shadow-lg transition-all"
               placeholder="you@example.com"
@@ -82,6 +95,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-gray-800 text-white border-none placeholder-gray-500 rounded-full py-3 px-4 focus:ring-cyan-400 shadow-lg transition-all"
               placeholder="••••••••"
@@ -93,12 +107,11 @@ export default function LoginPage() {
             type="submit"
             disabled={isLoading}
           >
-            {isLoading && (
-              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
             Start Chatting
           </Button>
         </form>
+
         <div className="text-center">
           <Link
             to="/forgot-password"
@@ -107,7 +120,7 @@ export default function LoginPage() {
             Forgot password?
           </Link>
         </div>
-        {/* Divider */}
+
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-gray-700" />
@@ -118,7 +131,7 @@ export default function LoginPage() {
             </span>
           </div>
         </div>
-        {/* Social Login Buttons */}
+
         <div className="flex flex-col space-y-2 mt-4">
           <Button
             variant="outline"
@@ -135,6 +148,7 @@ export default function LoginPage() {
             Google
           </Button>
         </div>
+
         <p className="text-center text-sm text-gray-400 mt-6">
           New to the app?{" "}
           <Link
