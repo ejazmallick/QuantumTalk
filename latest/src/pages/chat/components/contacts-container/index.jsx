@@ -1,8 +1,9 @@
 import ProfileInfo from "./components/profile-info"; // Ensure correct import
-import { useAppStore } from '@/store'; // Import Zustand store
+import { useAppStore } from '@/store'; // Corrected import path for Zustand store
 import NewDM from "./components/profile-info/new-dm";
+
 const ContactsContainer = () => {
-  const { userInfo } = useAppStore();
+  const { userInfo, setSelectedChatType } = useAppStore(); // Include setSelectedChatType
 
   return (
     <div className="flex flex-col h-screen w-75 bg-[#1b1c24] border-r-2 border-[#2f303b]">
@@ -10,11 +11,11 @@ const ContactsContainer = () => {
         <Logo />
       </div>
       <div className="flex items-center justify-between my-5 px-4">
-  <Title text="Direct Messages" />
-  <NewDM />
-</div>
+        <Title text="Direct Messages" />
+        <NewDM />
+      </div>
 
-      <div className="my-2 flex items-center justify-between px-4">
+      <div className="my-2 flex items-center justify-between px-4" onClick={() => setSelectedChatType('someChatType')}>
         <Title text="Channels" />
       </div>
 
@@ -31,7 +32,8 @@ export default ContactsContainer;
 
 // Logo Component
 const Logo = () => {
-  return  <div className="flex p-5 justify-center items-center gap-2">
+  return (
+    <div className="flex p-5 justify-center items-center gap-2">
       <svg
         id="logo-38"
         width="78"
@@ -46,7 +48,7 @@ const Logo = () => {
       </svg>
       <span className="text-3xl font-semibold text-white">Quantum</span>
     </div>
-  
+  );
 };
 
 // Title Component

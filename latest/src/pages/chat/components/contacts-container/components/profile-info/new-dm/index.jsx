@@ -3,21 +3,22 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { FaPlus } from "react-icons/fa";
 import { SEARCH_CONTACTS_ROUTES } from "../../../../../../../utils/constants";
-import { useAppStore } from '@/store'; // Import Zustand store
-
-import apiClient from "../../../../../../../lib/api-client"; // Corrected path to apiClient
+import { useAppStore } from "@/store"; // Zustand store
+import apiClient from "../../../../../../../lib/api-client"; // API client
 
 const NewDM = () => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
-  const { userInfo } = useAppStore(); // Get logged-in user info
 
-  // Fetch all users from backend (excluding logged-in user)
+  // Zustand store functions
+  const { userInfo, setSelectedChatType, setSelectedChatData } = useAppStore();
+
+  // Fetch all contacts (excluding logged-in user)
   useEffect(() => {
     if (!userInfo) {
-      console.error("User is not logged in!");
+      console.error("❌ User is not logged in!");
       return;
     }
 
@@ -25,47 +26,63 @@ const NewDM = () => {
       try {
         const token = localStorage.getItem("authToken");
         if (!token) {
-          console.error("No auth token found!");
+          console.error("❌ No auth token found!");
           return;
         }
 
         const response = await apiClient.post(
           SEARCH_CONTACTS_ROUTES,
-          { searchContacts: "all" }, // Send a default search term to fetch all contacts
+          {}, // 🔹 FIX: Send empty object instead of `searchTerm: ""`
           {
             headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true, // Ensure credentials are sent
+            withCredentials: true,
           }
         );
 
         if (response.status === 200) {
-          console.log("Contacts fetched:", response.data.contacts);
+          console.log("✅ Contacts fetched:", response.data.contacts);
           setContacts(response.data.contacts || []);
           setFilteredContacts(response.data.contacts || []);
+        } else {
+          console.error("⚠️ Failed to fetch contacts:", response.data);
         }
       } catch (error) {
-        console.error("Error fetching contacts:", error);
+        console.error("❌ Error fetching contacts:", error.response?.data || error.message);
       }
     };
 
     fetchContacts();
   }, [userInfo]);
 
-  // Handle search functionality
+  // Handle search input
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchTerm(query);
 
-    // Include logged-in user in search results
-    const allContacts = [...contacts, userInfo];
+    if (query === "") {
+      // 🔹 Reset to full contacts list when search is cleared
+      setFilteredContacts(contacts);
+    } else {
+      setFilteredContacts(
+        contacts.filter(
+          (contact) =>
+            contact.name.toLowerCase().includes(query) ||
+            contact.email.toLowerCase().includes(query)
+        )
+      );
+    }
+  };
 
-    setFilteredContacts(
-      allContacts.filter(
-        (contact) =>
-          contact.name.toLowerCase().includes(query) ||
-          contact.email.toLowerCase().includes(query)
-      )
-    );
+  // Open chat with selected contact
+  const handleContactClick = (contact) => {
+    if (!setSelectedChatType || !setSelectedChatData) {
+      console.error("⚠️ Zustand store functions are undefined!");
+      return;
+    }
+
+    setSelectedChatType("dm");
+    setSelectedChatData(contact);
+    setOpen(false);
   };
 
   return (
@@ -100,11 +117,11 @@ const NewDM = () => {
             <ScrollArea.Root className="w-full h-32 overflow-hidden border rounded-md bg-[#2a2b35] border-gray-600">
               <ScrollArea.Viewport className="p-2">
                 {filteredContacts.length > 0 ? (
-                  filteredContacts.map((contact) => (
+                  filteredContacts.map((contact, index) => (
                     <div
-                      key={contact._id} // Use _id as the unique identifier
-
+                      key={contact.id || contact.email || index}
                       className="p-1 text-sm hover:bg-gray-600 rounded cursor-pointer"
+                      onClick={() => handleContactClick(contact)}
                     >
                       {contact.name} ({contact.email})
                     </div>

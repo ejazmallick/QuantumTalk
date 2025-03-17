@@ -1,6 +1,6 @@
 import User from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { renameSync, unlinkSync, existsSync } from "fs";
 import path from "path";
 import dotenv from "dotenv";
@@ -19,8 +19,23 @@ export const signup = async (req, res) => {
     const { name, email, password } = req.body;
     if (!email || !password) return res.status(400).send("Please provide an email and password");
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    // ❌ Don't hash the password here! UserModel.js will do it automatically.
+    const user = await User.create({ name, email, password });
+    
+    // Fetch all existing users to update their contacts
+    const existingUsers = await User.find({});
+    console.log("Existing users fetched:", existingUsers); // Debug log
+
+    for (const existingUser of existingUsers) {
+        if (!existingUser.contacts.includes(user._id)) {
+            existingUser.contacts.push(user._id);
+            console.log(`Added user ID ${user._id} to contacts of user ID ${existingUser._id}`); // Debug log
+        }
+
+        await existingUser.save();
+    }
+
+
     const token = createToken(email, user.id);
 
     return res.status(201).json({
@@ -43,8 +58,13 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).send("User not found");
 
-    const auth = await bcrypt.compare(password, user.password);
-    if (!auth) return res.status(400).send("Incorrect password");
+    const auth = await user.comparePassword(password);
+    console.log("Password Comparison:", { password, userPassword: user.password, auth }); // Debugging log
+    console.log("User ID:", user.id); // Additional debugging log to capture user ID
+
+
+    if (!auth) return res.status(400).send("The password you entered is incorrect. Please try again.");
+
 
     const token = createToken(email, user.id);
     return res.status(200).json({
@@ -171,4 +191,3 @@ export const logout = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-

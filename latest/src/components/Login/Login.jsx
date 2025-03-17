@@ -31,7 +31,9 @@ export default function LoginPage() {
       if (response.status === 200) {
         const { token, user } = response.data;
 
-        // ✅ Store token in localStorage
+        // ✅ Store token in localStorage and log the action
+        console.log("Storing token in localStorage:", token); // Debugging log
+
         localStorage.setItem("authToken", token);
         console.log("✅ Token stored:", token);
 
@@ -42,7 +44,8 @@ export default function LoginPage() {
         }, 500);
       }
     } catch (error) {
-      console.error("❌ Login error:", error.response?.data || error.message);
+      alert(error.response?.data || "An error occurred during login. Please try again.");
+
     } finally {
       setTimeout(() => setIsLoading(false), 3000);
     }

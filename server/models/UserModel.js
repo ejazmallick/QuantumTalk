@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { hash, genSaltSync } from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -17,21 +17,31 @@ const userSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required:false,
+        required: false,
     },
-   
     profileSetup: {
         type: Boolean,
         default: false,
     },
+    contacts: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Users',
+        default: [],
+    },
 });
 
-userSchema.pre('save',  async function (next) {
-    const salt = await genSaltSync();
-    this.password = await hash(this.password, salt);
+userSchema.pre('save', async function (next) {
+    if (!this.isModified("password")) return next(); // Prevent rehashing on updates
+
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
     next();
 });
 
-const User= mongoose.model('Users', userSchema);
+userSchema.methods.comparePassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const User = mongoose.model('Users', userSchema);
 
 export default User;

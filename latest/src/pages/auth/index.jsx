@@ -12,6 +12,11 @@ import { useAppStore } from '../../store';
 export default function Auth() {
   const navigate = useNavigate();
   const {setUserInfo} = useAppStore;
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   
   const validateLogin = () => {
     if (!email.length) {
@@ -123,6 +128,7 @@ export default function Auth() {
             description="Experience smooth and responsive chats."
           />
         </div>
+        
 
         {/* Buttons */}
         <div className="flex flex-col space-y-4">
