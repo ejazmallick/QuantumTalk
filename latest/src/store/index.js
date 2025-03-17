@@ -9,5 +9,10 @@ export const useAppStore = create((set, get) => ({
     set({ userInfo });
   },
 
+  logout: () => {
+    console.log("🔴 Logging out...");
+    set({ userInfo: null, ...createChatSlice(set, get) }); // Reset userInfo and chat slice
+  },
+
   ...createChatSlice(set, get), // ✅ Include chat slice
 }));
