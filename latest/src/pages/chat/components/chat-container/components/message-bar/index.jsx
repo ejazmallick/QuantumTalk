@@ -39,17 +39,17 @@ const MessageBar = () => {
       console.error("❌ User info is missing. Cannot send message.");
       return;
     }
-  
+
     if (!selectedChatData?._id) {
       console.error("❌ No recipient selected.");
       return;
     }
-  
+
     if (!socket || !socket.connected) {
       console.error("❌ Socket is not connected. Message not sent.");
       return;
     }
-  
+
     const newMessage = {
       _id: Date.now().toString(),
       sender: { _id: userInfo?._id },
@@ -58,12 +58,12 @@ const MessageBar = () => {
       content: message,
       timestamp: new Date().toISOString(),
     };
-  
+
     console.log("📨 Sending message:", newMessage);
-  
+
     // Optimistic UI update
     addMessage(newMessage);
-  
+
     // Send message via socket with acknowledgment
     socket.emit("sendMessage", newMessage, (ack) => {
       if (ack?.error) {
@@ -72,11 +72,10 @@ const MessageBar = () => {
         console.log("✅ Message sent successfully:", ack);
       }
     });
-  
+
     setMessage("");
     setImage(null);
   };
-  
 
   return (
     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-full flex justify-center">

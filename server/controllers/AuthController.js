@@ -81,17 +81,23 @@ export const login = async (req, res) => {
 // ✅ Get User Info
 export const getUserInfo = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
-    if (!user) return res.status(404).send("User not found");
+    console.log("🛠️ Debugging getUserInfo - req.user:", req.user); // Debugging
+
+    const userId = req.user.userId || req.user.id;  // 🔥 Ensure we get the user ID
+    if (!userId) return res.status(401).json({ error: "Unauthorized - User ID missing" });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     return res.status(200).json({
       user: { id: user.id, email: user.email, profileSetup: user.profileSetup, name: user.name, image: user.image },
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json("Internal Server error occurred");
+    console.error("❌ Error in getUserInfo:", error);
+    return res.status(500).json("Internal Server Error");
   }
 };
+
 
 // ✅ Update Profile
 export const updateProfile = async (req, res) => {
