@@ -31,45 +31,27 @@ const MessageBar = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) {
-      console.log("⚠️ Message is empty. Not sending.");
-      return;
-    }
-    if (!userInfo?._id) {
-      console.error("❌ User info is missing. Cannot send message.");
-      return;
-    }
+    if (!message.trim()) return;
 
-    if (!selectedChatData?._id) {
-      console.error("❌ No recipient selected.");
-      return;
-    }
-
-    if (!socket || !socket.connected) {
-      console.error("❌ Socket is not connected. Message not sent.");
+    if (!userInfo || !userInfo._id || !selectedChatData?._id || !socket?.connected) {
+      console.error("❌ Missing required data to send message.");
       return;
     }
 
     const newMessage = {
       _id: Date.now().toString(),
-      sender: { _id: userInfo?._id },
-      recipient: { _id: selectedChatData?._id },
+      sender: { _id: userInfo._id },
+      recipient: { _id: selectedChatData._id },
       messageType: "text",
       content: message,
       timestamp: new Date().toISOString(),
     };
 
-    console.log("📨 Sending message:", newMessage);
-
-    // Optimistic UI update
-    addMessage(newMessage);
-
-    // Send message via socket with acknowledgment
     socket.emit("sendMessage", newMessage, (ack) => {
       if (ack?.error) {
         console.error("❌ Error sending message:", ack.error);
       } else {
-        console.log("✅ Message sent successfully:", ack);
+        addMessage({ ...newMessage, _id: ack.messageId || newMessage._id });
       }
     });
 
@@ -95,12 +77,7 @@ const MessageBar = () => {
                 className="absolute bottom-12 left-0 bg-[#2a2b33] rounded-lg shadow-lg border border-[#3a3b44] z-10"
                 ref={emojiRef}
               >
-                <EmojiPicker
-                  theme="dark"
-                  onEmojiClick={handleAddEmoji}
-                  autoFocusSearch={false}
-                  emojiStyle="native"
-                />
+                <EmojiPicker theme="dark" onEmojiClick={handleAddEmoji} autoFocusSearch={false} emojiStyle="native" />
               </div>
             )}
 
@@ -116,6 +93,12 @@ const MessageBar = () => {
             placeholder="Type a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }} // 🚀 Press "Enter" to send, Shift+Enter for new line
           />
 
           {/* Send Button */}

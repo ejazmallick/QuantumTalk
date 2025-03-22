@@ -26,7 +26,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post("/api/auth/login", { email, password });
+      const response = await apiClient.post("http://localhost:8747/api/auth/login", { email, password });
 
       if (response.status === 200) {
         const { token, user } = response.data;

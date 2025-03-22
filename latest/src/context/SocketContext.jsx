@@ -4,12 +4,11 @@ import { useAppStore } from "../store"; // Zustand store
 import { HOST } from "../utils/constants"; // Ensure HOST is correct
 
 const SocketContext = createContext(null);
-
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
     const socketRef = useRef(null);
-    const { userInfo, addMessage } = useAppStore();
+    const { userInfo } = useAppStore(); // ✅ Get user info from Zustand
     const [isConnected, setIsConnected] = useState(false);
     const [socketInstance, setSocketInstance] = useState(null);
 
@@ -54,6 +53,8 @@ export const SocketProvider = ({ children }) => {
 
         // 🔹 Handle Incoming Messages
         newSocket.on("receiveMessage", (message) => {
+            console.log("📩 Received message via socket:", message);
+            
             console.log("📩 New WebSocket message received:", message);
 
             if (!message?.sender?._id || !message?.recipient?._id) {
@@ -74,7 +75,8 @@ export const SocketProvider = ({ children }) => {
                 selectedChatType &&
                 (selectedChatData?._id === message.sender._id || selectedChatData?._id === message.recipient._id)
             ) {
-                if (selectedChatMessages.some((msg) => msg._id === message._id)) {
+                // ✅ Ensure `selectedChatMessages` exists before checking duplicates
+                if (selectedChatMessages?.some((msg) => msg._id === message._id)) {
                     console.warn("⚠️ Duplicate message detected. Skipping...");
                     return;
                 }
@@ -96,10 +98,12 @@ export const SocketProvider = ({ children }) => {
             }
             setIsConnected(false);
         };
-    }, [userInfo, addMessage]);
+    }, [userInfo]); // ✅ Only re-run when `userInfo` changes
 
     // 🔹 Function to Send Messages
-    const sendMessage = ({ sender, recipient, messageType, content }) => {
+    const sendMessage = ({ recipient, messageType, content }) => {
+        const sender = useAppStore.getState().userInfo; // ✅ Auto-fetch sender from Zustand
+
         if (!socketInstance) {
             console.error("❌ No socket connection available.");
             return;
@@ -107,6 +111,10 @@ export const SocketProvider = ({ children }) => {
 
         if (!sender?._id || !recipient?._id) {
             console.error("❌ Invalid sender or recipient. Cannot send message.");
+            return;
+        }
+        if (!recipient?._id || sender._id === recipient._id) {
+            console.warn("⚠️ Invalid recipient! Sender and recipient are the same.");
             return;
         }
 

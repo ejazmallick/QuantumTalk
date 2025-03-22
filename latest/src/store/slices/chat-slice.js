@@ -14,29 +14,44 @@ export const createChatSlice = (set, get) => ({
     }),
 
     addMessage: (message) => {
-        const { selectedChatMessages = [] } = get();
+        console.log("🟢 Debug: Adding message to Zustand:", message);
+        const { selectedChatData, selectedChatMessages = [] } = get();
 
         console.log("📝 Zustand: Before Update Messages:", selectedChatMessages);
         console.log("📨 New message received:", message);
 
-        // 🔹 Ensure message has an ID and avoid duplicates
-        if (!message._id || selectedChatMessages.some(msg => msg._id === message._id)) {
-            console.warn("⚠️ Invalid or duplicate message detected. Skipping...");
+        // 🔹 Validate message format
+        if (!message || typeof message !== "object") {
+            console.error("❌ Invalid message format. Skipping...");
             return;
         }
 
-        // 🔹 Ensure correct sender/recipient format
-        const newMessage = {
-            ...message,
-            recipient: message?.recipient?._id || message?.recipient || "unknown",
-            sender: message?.sender?._id || message?.sender || "unknown",
-        };
+        // 🔹 Ensure sender & recipient are valid
+        if (!message.sender?._id || !message.recipient?._id) {
+            console.warn("⚠️ Message is missing sender or recipient. Ignoring.");
+            return;
+        }
 
-        // 🔹 Create new array instead of mutating existing state
-        const updatedMessages = [...selectedChatMessages, newMessage];
+        // 🔹 Ignore messages that don't belong to the selected chat
+        if (
+            !selectedChatData ||
+            (selectedChatData._id !== message.sender._id && selectedChatData._id !== message.recipient._id)
+        ) {
+            console.warn("⚠️ Message does not belong to the selected chat. Skipping...");
+            return;
+        }
 
-        console.log("✅ Zustand: After Update Messages:", updatedMessages);
+        // 🔹 Avoid duplicate messages (if `_id` exists)
+        if (selectedChatMessages.some(msg => msg._id === message._id)) {
+            console.warn("⚠️ Duplicate message detected. Skipping...");
+            return;
+        }
 
-        set({ selectedChatMessages: updatedMessages });
+        // 🔹 Update Zustand state
+        set((state) => ({
+            selectedChatMessages: [...state.selectedChatMessages, message],
+        }));
+
+        console.log("✅ Zustand: After Update Messages:", get().selectedChatMessages);
     },
 });

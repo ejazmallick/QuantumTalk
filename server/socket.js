@@ -54,17 +54,22 @@ const setupSocket = (server) => {
     // Listen for direct messages
     socket.on("sendMessage", async ({ sender, recipient, messageType, content }) => {
       console.log("📩 Received sendMessage event:", { sender, recipient, content });
+// Validate sender & recipient
+if (!sender || typeof sender !== "object" || !sender._id || !mongoose.Types.ObjectId.isValid(sender._id)) {
+  console.log(`❌ Invalid sender ObjectId: ${JSON.stringify(sender, null, 2)}`);
+  return;
+}
 
-      // Validate sender & recipient
-      if (!sender || !sender._id || !mongoose.Types.ObjectId.isValid(sender._id)) {
-        console.log(`❌ Invalid sender ObjectId: ${JSON.stringify(sender)}`);
-        return;
-      }
+if (!recipient || typeof recipient !== "object" || !recipient._id || !mongoose.Types.ObjectId.isValid(recipient._id)) {
+  console.log(`❌ Invalid recipient ObjectId: ${JSON.stringify(recipient, null, 2)}`);
+  return;
+}
+console.log(`🆔 Sender ID: ${sender._id}, Recipient ID: ${recipient._id}`);
+if (sender._id === recipient._id) {
+  console.warn("⚠️ Sender and recipient are the same. Ignoring message to prevent self-message issue.");
+  return;
+}
 
-      if (!recipient || !recipient._id || !mongoose.Types.ObjectId.isValid(recipient._id)) {
-        console.log(`❌ Invalid recipient ObjectId: ${JSON.stringify(recipient)}`);
-        return;
-      }
 
       try {
         // Save message in database
