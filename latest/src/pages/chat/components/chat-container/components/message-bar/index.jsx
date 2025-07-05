@@ -5,15 +5,19 @@ import { RiEmojiStickerLine } from "react-icons/ri";
 import { MdSend } from "react-icons/md";
 import EmojiPicker from "emoji-picker-react";
 import { useSocket } from "../../../../../../context/SocketContext";
+import { UPLOAD_FILE_ROUTE } from "../../../../../../utils/constants";
+import apiClient from "../../../../../../lib/api-client"; // ✅ Ensure apiClient is imported
 
 const MessageBar = () => {
   const emojiRef = useRef();
+  const fileInputRef = useRef();
   const { socket } = useSocket();
   const { selectedChatType, selectedChatData, userInfo, addMessage } = useAppStore();
 
   const [message, setMessage] = useState("");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [image, setImage] = useState(null);
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -31,7 +35,7 @@ const MessageBar = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() && !file) return;
 
     if (!userInfo || !userInfo._id || !selectedChatData?._id || !socket?.connected) {
       console.error("❌ Missing required data to send message.");
@@ -42,8 +46,8 @@ const MessageBar = () => {
       _id: Date.now().toString(),
       sender: { _id: userInfo._id },
       recipient: { _id: selectedChatData._id },
-      messageType: "text",
-      content: message,
+      messageType: file ? "file" : "text",
+      content: file ? file.url : message,
       timestamp: new Date().toISOString(),
     };
 
@@ -56,7 +60,45 @@ const MessageBar = () => {
     });
 
     setMessage("");
-    setImage(null);
+    setFile(null);
+  };
+
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachmentChange = async (event) => {
+    const selectedFile = event.target.files[0];
+    if (!selectedFile) return;
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const response = await apiClient.post(UPLOAD_FILE_ROUTE, formData, { withCredentials: true });
+
+      if (response.status === 200 && response.data) {
+        const fileUrl = response.data.filePath;
+
+        const newFileMessage = {
+          sender: userInfo._id,
+          content: fileUrl, // ✅ Now correctly setting the file URL
+          recipient: selectedChatData._id,
+          messageType: "file",
+          fileUrl,
+        };
+
+        socket.emit("newMessage", newFileMessage);
+
+        setFile({ name: selectedFile.name, url: fileUrl });
+      }
+    } catch (error) {
+      console.error("❌ Error uploading file:", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -81,9 +123,14 @@ const MessageBar = () => {
               </div>
             )}
 
-            <button className="text-neutral-400 hover:text-white transition duration-300 p-2 rounded-full">
-              <GrAttachment className="text-xl" />
+            <button
+              className="text-neutral-400 hover:text-white transition duration-300 p-2 rounded-full"
+              onClick={handleAttachmentClick}
+              disabled={uploading}
+            >
+              {uploading ? "⏳" : <GrAttachment className="text-xl" />}
             </button>
+            <input type="file" className="hidden" ref={fileInputRef} onChange={handleAttachmentChange} />
           </div>
 
           {/* Message Input */}
@@ -99,15 +146,16 @@ const MessageBar = () => {
                 handleSendMessage();
               }
             }} // 🚀 Press "Enter" to send, Shift+Enter for new line
+            disabled={uploading}
           />
 
           {/* Send Button */}
           <button
             onClick={handleSendMessage}
             className={`${
-              message.trim() ? "bg-[#8417ff] hover:bg-[#741bda]" : "bg-gray-500 cursor-not-allowed"
+              message.trim() || file ? "bg-[#8417ff] hover:bg-[#741bda]" : "bg-gray-500 cursor-not-allowed"
             } text-white rounded-full p-3 transition duration-300 flex items-center justify-center ml-2`}
-            disabled={!message.trim()}
+            disabled={!message.trim() && !file}
           >
             <MdSend className="text-xl" />
           </button>

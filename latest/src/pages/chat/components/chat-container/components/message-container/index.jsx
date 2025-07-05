@@ -1,13 +1,34 @@
 import { useEffect, useRef } from "react";
 import { useAppStore } from "../../../../../../store";
 import moment from "moment";
+import { getMessages } from "../../../../../../lib/api-client"; // Ensure API client is imported
 
 const MessageContainer = () => {
   const scrollRef = useRef();
-
-  const { selectedChatMessages, selectedChatType, selectedChatData, userInfo, forceUpdate } = useAppStore();
+  const { selectedChatMessages, selectedChatType, selectedChatData, userInfo, forceUpdate, setSelectedChatMessages } = useAppStore();
 
   console.log("🎯 UI Render - Selected Messages:", selectedChatMessages);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      console.log("📥 Fetching messages...");
+
+      try {
+        const messages = await getMessages(selectedChatData._id);
+        console.log("✅ Messages fetched successfully:", messages);
+        setSelectedChatMessages(messages);
+      } catch (error) {
+        console.error("❌ Error fetching messages:", error);
+        console.log("⚠️ Check if selectedChatData is valid:", selectedChatData);
+      }
+    };
+
+    console.log("⚠️ Current selectedChatData:", selectedChatData);
+
+    if (selectedChatData?._id) {
+      fetchMessages(); // Fetch messages when chat changes
+    }
+  }, [selectedChatData, selectedChatType, setSelectedChatMessages]);
 
   useEffect(() => {
     console.log("📨 UI Updated with New Messages:", selectedChatMessages);

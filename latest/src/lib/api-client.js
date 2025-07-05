@@ -60,5 +60,23 @@ export const searchContacts = async (query) => {
   }
 };
 
+export const getMessages = async (userId) => {
+  if (!userId) {
+    console.warn("⚠️ No user ID provided. Skipping API call.");
+    return [];
+  }
+
+  try {
+    const response = await apiClient.post("/api/messages/get-messages", { id: userId });
+    console.log("✅ Messages fetched successfully:", response.data);
+    return response.data.messages || [];
+  } catch (error) {
+    console.error("❌ Error fetching messages:", error.response?.data || error);
+    return [];
+  }
+};
+
+
+
 // ✅ Export API Client
 export default apiClient;

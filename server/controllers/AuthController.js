@@ -33,7 +33,7 @@ export const signup = async (req, res) => {
         }
 
         await existingUser.save();
-    }
+    } 
 
 
     const token = createToken(email, user.id);
